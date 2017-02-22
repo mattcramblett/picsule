@@ -16,5 +16,45 @@ public class MenuActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
     }
+    /**
+     ******************************
+     *  ACTIVITY LIFECYCLE LOGIC  *
+     ******************************
+     */
 
+    @Override
+    protected void onStart() {
+        System.out.println("onStart method for MenuActivity being called");
+        super.onStart();
+    }
+
+    @Override
+    protected void onRestart() {
+        System.out.println("onRestart method for MenuActivity being called");
+        super.onRestart();
+    }
+
+    @Override
+    protected void onPause() {
+        System.out.println("onPause method for MenuActivity being called");
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        System.out.println("onResume method for MenuActivity being called");
+        super.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        System.out.println("onStop method for MenuActivity being called");
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy(){
+        System.out.println("onDestroy method for MenuActivity being called");
+        super.onDestroy();
+    }
 }
