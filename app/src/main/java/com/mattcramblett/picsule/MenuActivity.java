@@ -9,6 +9,8 @@ import android.view.View;
 
 public class MenuActivity extends AppCompatActivity {
 
+    //TODO: Write the app.
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
