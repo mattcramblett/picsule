@@ -10,24 +10,10 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="92dp"
-        app:srcCompat="@drawable/picsulelogo"
+        app:srcCompat="@drawable/picsulelogotemp"
         android:id="@+id/imageView2"
         android:layout_marginTop="62dp"
         android:layout_weight="0.03" />
-
-    <android.support.design.widget.AppBarLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/AppTheme.AppBarOverlay">
-
-        <android.support.v7.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            app:popupTheme="@style/AppTheme.PopupOverlay"/>
-
-    </android.support.design.widget.AppBarLayout>
 
     <Button
         android:text="Capture"

@@ -10,7 +10,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -24,7 +23,7 @@ import java.util.List;
 public class MenuActivity extends AppCompatActivity {
 
     //TODO: Write the app.
-    private Context activityContext;
+    private Context mActivityContext;
     private PhotoHelper photo;
     private static final int REQUEST_PHOTO = 131;
     Uri photoContent;
@@ -34,7 +33,7 @@ public class MenuActivity extends AppCompatActivity {
         //Set up activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
-        activityContext = this.getApplicationContext();
+        mActivityContext = this.getApplicationContext();
         Button btnCapture = (Button) findViewById(R.id.photo_button);
         final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
@@ -43,22 +42,20 @@ public class MenuActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                photo = new PhotoHelper(activityContext);
+                photo = new PhotoHelper(mActivityContext);
                 captureImage.putExtra(MediaStore.EXTRA_OUTPUT, photo.getUri());
 
-                List<ResolveInfo> cameraActivities = activityContext.getPackageManager().queryIntentActivities(captureImage,
+                List<ResolveInfo> cameraActivities = mActivityContext.getPackageManager().queryIntentActivities(captureImage,
                         PackageManager.MATCH_DEFAULT_ONLY);
 
                 for (ResolveInfo activity : cameraActivities){
-                    activityContext.grantUriPermission(activity.activityInfo.packageName,
+                    mActivityContext.grantUriPermission(activity.activityInfo.packageName,
                             photo.getUri(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
                 }
 
                 startActivityForResult(captureImage, REQUEST_PHOTO);
             }
         });
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
     }
 
     /**
