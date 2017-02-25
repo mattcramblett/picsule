@@ -5,8 +5,15 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    tools:context="com.mattcramblett.picsule.MenuActivity">
+    android:fitsSystemWindows="true">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="92dp"
+        app:srcCompat="@drawable/picsulelogo"
+        android:id="@+id/imageView2"
+        android:layout_marginTop="62dp"
+        android:layout_weight="0.03" />
 
     <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
@@ -21,5 +28,13 @@
             app:popupTheme="@style/AppTheme.PopupOverlay"/>
 
     </android.support.design.widget.AppBarLayout>
+
+    <Button
+        android:text="Capture"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/photo_button"
+        android:layout_marginTop="200dp"
+        android:layout_marginLeft="150dp" />
 
 </android.support.design.widget.CoordinatorLayout>
