@@ -24,6 +24,7 @@ public class MenuActivity extends AppCompatActivity {
 
     private Button mPhotoButton;
     private Button mExploreButton;
+    private Button mLogoutButton;
     private Context mActivityContext;
     private PhotoHelper photo;
     private static final int REQUEST_PHOTO = 131;
@@ -38,6 +39,7 @@ public class MenuActivity extends AppCompatActivity {
 
         mPhotoButton = (Button) findViewById(R.id.photo_button);
         mExploreButton = (Button) findViewById(R.id.explore_button);
+        mLogoutButton = (Button) findViewById(R.id.logout_button);
 
         initUI();
     }
@@ -107,6 +109,16 @@ public class MenuActivity extends AppCompatActivity {
                 startActivityForResult(captureImage, REQUEST_PHOTO);
             }
         });
+
+        mLogoutButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent logout = new Intent(MenuActivity.this, LoginActivity.class);
+                logout.putExtra("NAV_BACK", true);
+                startActivity(logout);
+            }
+        });
+
     }
 
     //ADDITIONAL METHODS

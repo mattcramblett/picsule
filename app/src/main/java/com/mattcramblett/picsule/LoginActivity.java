@@ -24,6 +24,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
     private TextView mDetailTextView;
     private EditText mEmailField;
     private EditText mPasswordField;
+    private boolean mUserNavigatedBack;
 
     // [START declare_auth]
     private FirebaseAuth mAuth;
@@ -54,12 +55,18 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         mAuth = FirebaseAuth.getInstance();
         // [END initialize_auth]
 
+        //true when this acitivity was launched from going back when on menu
+        if(getIntent().hasExtra("NAV_BACK")) {
+            mUserNavigatedBack = true;
+        }
+
         // [START auth_state_listener]
         mAuthListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
-                if (user != null) {
+
+                if (user != null && !mUserNavigatedBack) {
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
                     launchMenu();
@@ -251,6 +258,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         } else if (i == R.id.verify_email_button) {
             sendEmailVerification();
         }
+        mUserNavigatedBack = false;
     }
 
     private void launchMenu() {
