@@ -13,14 +13,31 @@
         app:srcCompat="@drawable/picsulelogotemp"
         android:id="@+id/imageView2"
         android:layout_marginTop="62dp"
-        android:layout_weight="0.03" />
+        android:layout_weight="0.03"/>
 
-    <Button
-        android:text="Capture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/photo_button"
-        android:layout_marginTop="200dp"
-        android:layout_marginLeft="150dp" />
+        <LinearLayout
+            android:id="@+id/menu_items"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="200dp">
+
+            <Button
+                android:text="Capture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/photo_button"
+                android:layout_marginLeft="150dp"
+                android:textColor="@color/colorPrimary"/>
+
+            <Button
+                android:text="Explore"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/explore_button"
+                android:layout_marginLeft="150dp"
+                android:textColor="@color/colorPrimary" />
+        </LinearLayout>
+
 
 </android.support.design.widget.CoordinatorLayout>

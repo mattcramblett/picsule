@@ -1,5 +1,6 @@
 package com.mattcramblett.picsule;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
@@ -61,6 +62,7 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
                 if (user != null) {
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                    launchMenu();
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");
@@ -249,5 +251,10 @@ public class LoginActivity extends BaseActivity implements View.OnClickListener 
         } else if (i == R.id.verify_email_button) {
             sendEmailVerification();
         }
+    }
+
+    private void launchMenu() {
+        Intent menu = new Intent(LoginActivity.this, MenuActivity.class);
+        startActivity(menu);
     }
 }

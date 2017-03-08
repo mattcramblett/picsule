@@ -22,7 +22,8 @@ import java.util.List;
 
 public class MenuActivity extends AppCompatActivity {
 
-    //TODO: Write the app.
+    private Button mPhotoButton;
+    private Button mExploreButton;
     private Context mActivityContext;
     private PhotoHelper photo;
     private static final int REQUEST_PHOTO = 131;
@@ -34,28 +35,11 @@ public class MenuActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu);
         mActivityContext = this.getApplicationContext();
-        Button btnCapture = (Button) findViewById(R.id.photo_button);
-        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
 
-        //Setting up button listeners
-        btnCapture.setOnClickListener(new OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        mPhotoButton = (Button) findViewById(R.id.photo_button);
+        mExploreButton = (Button) findViewById(R.id.explore_button);
 
-                photo = new PhotoHelper(mActivityContext);
-                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, photo.getUri());
-
-                List<ResolveInfo> cameraActivities = mActivityContext.getPackageManager().queryIntentActivities(captureImage,
-                        PackageManager.MATCH_DEFAULT_ONLY);
-
-                for (ResolveInfo activity : cameraActivities){
-                    mActivityContext.grantUriPermission(activity.activityInfo.packageName,
-                            photo.getUri(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-                }
-
-                startActivityForResult(captureImage, REQUEST_PHOTO);
-            }
-        });
+        initUI();
     }
 
     /**
@@ -98,6 +82,31 @@ public class MenuActivity extends AppCompatActivity {
     protected void onDestroy() {
         System.out.println("onDestroy method for MenuActivity being called");
         super.onDestroy();
+    }
+
+    private void initUI() {
+
+        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        //Setting up button listeners
+        mPhotoButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                photo = new PhotoHelper(mActivityContext);
+                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, photo.getUri());
+
+                List<ResolveInfo> cameraActivities = mActivityContext.getPackageManager().queryIntentActivities(captureImage,
+                        PackageManager.MATCH_DEFAULT_ONLY);
+
+                for (ResolveInfo activity : cameraActivities){
+                    mActivityContext.grantUriPermission(activity.activityInfo.packageName,
+                            photo.getUri(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                }
+
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+            }
+        });
     }
 
     //ADDITIONAL METHODS
@@ -145,4 +154,5 @@ public class MenuActivity extends AppCompatActivity {
         startActivity(submission);
 
     }
+
 }
