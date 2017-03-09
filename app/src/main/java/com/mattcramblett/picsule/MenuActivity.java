@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
@@ -28,7 +29,6 @@ public class MenuActivity extends AppCompatActivity {
     private Context mActivityContext;
     private PhotoHelper photo;
     private static final int REQUEST_PHOTO = 131;
-    Uri photoContent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,6 +104,9 @@ public class MenuActivity extends AppCompatActivity {
                 for (ResolveInfo activity : cameraActivities){
                     mActivityContext.grantUriPermission(activity.activityInfo.packageName,
                             photo.getUri(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+                    mActivityContext.grantUriPermission(activity.activityInfo.packageName,
+                            photo.getUri(), Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 }
 
                 startActivityForResult(captureImage, REQUEST_PHOTO);
@@ -130,16 +133,8 @@ public class MenuActivity extends AppCompatActivity {
                 case Activity.RESULT_OK:
                     if(photo.getFile().exists()){
 
-                        try {
-                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), photo.getUri());
-                            startSubmissionIntent(bitmap);
-                        } catch (FileNotFoundException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
-                        } catch (IOException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
-                        }
+                        //Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), photo.getUri());
+                        startSubmissionIntent();
 
                     }
                     else{
@@ -155,14 +150,14 @@ public class MenuActivity extends AppCompatActivity {
         }
     }
 
-    private void startSubmissionIntent(Bitmap bitmap){
+    private void startSubmissionIntent(){
 
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-        byte[] byteArray = stream.toByteArray();
+        //ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        //bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+        //byte[] byteArray = stream.toByteArray();
 
         Intent submission = new Intent(MenuActivity.this, SubmissionActivity.class);
-        submission.putExtra("BitmapImage", byteArray);
+        submission.putExtra("ImageUri", photo.getUri().toString());
         startActivity(submission);
 
     }
