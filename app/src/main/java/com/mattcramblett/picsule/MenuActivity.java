@@ -122,6 +122,15 @@ public class MenuActivity extends AppCompatActivity {
             }
         });
 
+        mExploreButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent explore = new Intent(MenuActivity.this, ExploreActivity.class);
+                explore.putExtra("NAV_BACK", true);
+                startActivity(explore);
+            }
+        });
+
     }
 
     //ADDITIONAL METHODS
