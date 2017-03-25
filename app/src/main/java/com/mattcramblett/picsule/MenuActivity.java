@@ -1,11 +1,14 @@
 package com.mattcramblett.picsule;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -86,6 +89,7 @@ public class MenuActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+
     private void initUI() {
 
         final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -134,6 +138,13 @@ public class MenuActivity extends AppCompatActivity {
     }
 
     //ADDITIONAL METHODS
+
+    /*
+    This method will handle intents/activities that will give a result.  These intents
+    are typically started with the startActivityForResult() method.  This method override will
+    handle Activity Results for the following:
+        1). Camera - Using ACTION_IMAGE_CAPTURE
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
         System.out.println("onActivityResult has been called");
@@ -159,15 +170,43 @@ public class MenuActivity extends AppCompatActivity {
         }
     }
 
+    /*
+    This is a helper meant to start the Submission Activity
+     */
     private void startSubmissionIntent(){
-
-        //ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        //bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-        //byte[] byteArray = stream.toByteArray();
-
-        Intent submission = new Intent(MenuActivity.this, SubmissionActivity.class);
-        submission.putExtra("ImageUri", photo.getUri().toString());
-        startActivity(submission);
+        /*
+        String mPhotoLat = null;
+        String mPhotoLon = null;
+        try {
+            ExifInterface gpsRetriever = new ExifInterface(photo.getFile().toString());
+            mPhotoLat = gpsRetriever.getAttribute(ExifInterface.TAG_GPS_LATITUDE);
+            mPhotoLon = gpsRetriever.getAttribute(ExifInterface.TAG_GPS_LONGITUDE);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+        */
+        //if(!(mPhotoLat == null || mPhotoLon == null)) {
+            Intent submission = new Intent(MenuActivity.this, SubmissionActivity.class);
+            submission.putExtra("ImageUri", photo.getUri().toString());
+            submission.putExtra("ImageFile", photo.getFile().toString());
+            startActivity(submission);
+        //}else{
+        /*
+            AlertDialog.Builder builder = new AlertDialog.Builder(mActivityContext);
+            // Add the buttons
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User clicked OK button
+                    dialog.dismiss();
+                }
+            });
+            // Set other dialog properties
+            builder.setMessage("Turn on location tagging in your camera settings.")
+                    .setTitle("No location tags!");
+            // Create the AlertDialog
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        } */
 
     }
 
