@@ -189,6 +189,7 @@ public class MenuActivity extends AppCompatActivity {
             Intent submission = new Intent(MenuActivity.this, SubmissionActivity.class);
             submission.putExtra("ImageUri", photo.getUri().toString());
             submission.putExtra("ImageFile", photo.getFile().toString());
+            submission.putExtra("ImageName", photo.getName());
             startActivity(submission);
         //}else{
         /*
