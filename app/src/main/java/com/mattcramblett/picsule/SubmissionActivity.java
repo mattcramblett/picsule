@@ -75,7 +75,7 @@ public class SubmissionActivity extends AppCompatActivity {
     protected void onStart() {
         System.out.println("onStart method for SubmissionActivity being called");
         super.onStart();// ATTENTION: This was auto-generated to implement the App Indexing API.
-// See https://g.co/AppIndexing/AndroidStudio for more information.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -161,7 +161,7 @@ public class SubmissionActivity extends AppCompatActivity {
 
     private void submitPhoto() {
         DatabaseHelper database = new DatabaseHelper();
-        database.uploadPhoto(mPhotoUri, mPhotoName);
+        database.uploadPhoto(mPhotoUri, mPhotoName, mPhotoLat, mPhotoLon);
         Intent menu = new Intent(this, MenuActivity.class);
         startActivity(menu);
     }
