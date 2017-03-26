@@ -42,7 +42,7 @@ public class DatabaseHelper {
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
                 String downloadUrl= taskSnapshot.getDownloadUrl().toString();
                 Image newImage = new Image(fileName, downloadUrl, lat, lon);
-                mDatabase.child("picsule-eb269").push().setValue(newImage);
+                mDatabase.push().setValue(newImage);
             }
         });
 

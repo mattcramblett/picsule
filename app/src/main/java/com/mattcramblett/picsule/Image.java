@@ -5,10 +5,10 @@ package com.mattcramblett.picsule;
  */
 
 public class Image {
-    private String imageName;
-    private String imageURL;
-    private String imageLat;
-    private String imageLon;
+    public String imageName;
+    public String imageURL;
+    public String imageLat;
+    public String imageLon;
 
     public Image(String name, String url, String lat, String lon){
         imageName = name;

@@ -6,7 +6,10 @@ import android.os.Environment;
 import android.support.v4.content.FileProvider;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Random;
+import java.util.Date;
 
 /**
  * Created by Joe on 2/23/2017.
@@ -15,7 +18,7 @@ import java.util.Random;
 public class PhotoHelper {
 
     //Used to generate a random file name
-    final static String alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+    final static String alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     final static int length = alphabet.length();
     private static final Random r = new Random();
 
@@ -48,7 +51,7 @@ public class PhotoHelper {
 
     private String generateRandomFileName(){
         generated = "";
-        for(int i = 0; i<12; i++){
+        for(int i = 0; i<15; i++){
             generated += alphabet.charAt(r.nextInt(length));
         }
         generated = "img_" + generated + ".jpg";
