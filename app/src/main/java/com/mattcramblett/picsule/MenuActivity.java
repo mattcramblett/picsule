@@ -29,6 +29,7 @@ public class MenuActivity extends AppCompatActivity {
     private Button mPhotoButton;
     private Button mExploreButton;
     private Button mLogoutButton;
+    private Button mNearbyButton;
     private Context mActivityContext;
     private PhotoHelper photo;
     private static final int REQUEST_PHOTO = 131;
@@ -43,6 +44,7 @@ public class MenuActivity extends AppCompatActivity {
         mPhotoButton = (Button) findViewById(R.id.photo_button);
         mExploreButton = (Button) findViewById(R.id.explore_button);
         mLogoutButton = (Button) findViewById(R.id.logout_button);
+        mNearbyButton = (Button) findViewById(R.id.nearby_button);
 
         initUI();
     }
@@ -135,6 +137,14 @@ public class MenuActivity extends AppCompatActivity {
             }
         });
 
+        mNearbyButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent nearby = new Intent(MenuActivity.this, NearbyActivity.class);
+                nearby.putExtra("NAV_BACK", true);
+                startActivity(nearby);
+            }
+        });
     }
 
     //ADDITIONAL METHODS
