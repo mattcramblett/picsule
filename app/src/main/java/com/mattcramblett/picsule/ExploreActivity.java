@@ -1,6 +1,8 @@
 package com.mattcramblett.picsule;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -20,16 +22,22 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 
+import java.net.URL;
+import java.sql.Blob;
 import java.util.HashMap;
 import java.util.Map;
 //AIzaSyDTUDzGBgyfg0GLpbpbnN2IhaKheY5FU9U maps api key
@@ -82,13 +90,13 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
         //get the current location
         getDeviceLocation();
 
-        LatLng bobaksOldApt = new LatLng(40.0074380, -83.0062790);
         LatLng currentLatLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
         LatLngBounds bounds = new LatLngBounds(
                 new LatLng(currentLatLng.latitude - MAPBOUNDSTHRESHOLD, currentLatLng.longitude - MAPBOUNDSTHRESHOLD),
                 new LatLng(currentLatLng.latitude + MAPBOUNDSTHRESHOLD, currentLatLng.longitude + MAPBOUNDSTHRESHOLD));
 
       //  map.setMinZoomPreference(15);
+        final StorageReference storageRef = FirebaseStorage.getInstance().getReferenceFromUrl("gs://picsule-eb269.appspot.com");
 
         DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReferenceFromUrl("https://picsule-eb269.firebaseio.com/");
         mDatabase.addValueEventListener(new ValueEventListener() {
@@ -101,13 +109,29 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
                     HashMap<String, Object> singleImage = (HashMap) entry.getValue();
                     //get lat/lon field and append if nearby
 
-                    System.out.println("db image Name: " + (String) singleImage.get("imageName"));
-                    System.out.println("db lat: " + (double) singleImage.get("imageLat"));
-                    System.out.println("db lon: " + (double) singleImage.get("imageLon"));
+                    //get the properties of the photo
+                    final String name =  (String) singleImage.get("imageName");
+                    String imUrl =  (String) singleImage.get("imageURL");
+                    final LatLng ltln = new LatLng((double) singleImage.get("imageLat"), (double) singleImage.get("imageLon"));
 
-                    String name =  (String) singleImage.get("imageName");
-                    LatLng ltln = new LatLng((double) singleImage.get("imageLat"), (double) singleImage.get("imageLon"));
-                    mMap.addMarker(new MarkerOptions().position(ltln).title(name));
+                    //download the photo
+                    StorageReference imageRef = storageRef.child("images/" + name);
+                    final long THREE_MEGABYTE = 3072 * 3072;
+                    imageRef.getBytes(THREE_MEGABYTE).addOnSuccessListener(new OnSuccessListener<byte[]>() {
+                        @Override
+                        public void onSuccess(byte[] bytes) {
+                            //ON successful download, add a marker to the map with an icon
+                            Bitmap b = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                            BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(b, 200, 200, false));
+                            mMap.addMarker(new MarkerOptions().position(ltln).title(name).icon(icon));
+                        }
+                    }).addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception exception) {
+                            // Handle any errors
+                            System.out.println("failed to download image");
+                        }
+                    });;
                     i++;
                 }
             }
