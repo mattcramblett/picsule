@@ -5,6 +5,7 @@ package com.mattcramblett.picsule;
  */
 
 public class Image {
+
     public String imageName;
     public String imageURL;
     public double imageLat;

@@ -20,10 +20,18 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+
+import java.util.HashMap;
+import java.util.Map;
 //AIzaSyDTUDzGBgyfg0GLpbpbnN2IhaKheY5FU9U maps api key
 
 public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMyLocationButtonClickListener,
@@ -43,7 +51,7 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
     private MapFragment mMapFragment;
     private Uri mPhotoUri;
     private GoogleApiClient client;
-
+    private Map<String, LatLng> imagesToLoad;
     private GoogleApiClient mGoogleApiClient;
 
     @Override
@@ -75,16 +83,40 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
         getDeviceLocation();
 
         LatLng bobaksOldApt = new LatLng(40.0074380, -83.0062790);
-        //LatLng currentLatLng = new LatLng(0,0);
         LatLng currentLatLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
         LatLngBounds bounds = new LatLngBounds(
                 new LatLng(currentLatLng.latitude - MAPBOUNDSTHRESHOLD, currentLatLng.longitude - MAPBOUNDSTHRESHOLD),
                 new LatLng(currentLatLng.latitude + MAPBOUNDSTHRESHOLD, currentLatLng.longitude + MAPBOUNDSTHRESHOLD));
-        map.setMinZoomPreference(18);
 
-        //add markers for each photo
-        map.addMarker(new MarkerOptions().position(bobaksOldApt).title("Bobaks Old Apartment"));
-        map.addMarker(new MarkerOptions().position(currentLatLng).title("Current Location"));
+      //  map.setMinZoomPreference(15);
+
+        DatabaseReference mDatabase = FirebaseDatabase.getInstance().getReferenceFromUrl("https://picsule-eb269.firebaseio.com/");
+        mDatabase.addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                HashMap<String, Object> data = (HashMap<String,Object>) dataSnapshot.getValue();
+                int i = 0;
+                for (HashMap.Entry<String, Object> entry : data.entrySet()) {
+                    //get image map
+                    HashMap<String, Object> singleImage = (HashMap) entry.getValue();
+                    //get lat/lon field and append if nearby
+
+                    System.out.println("db image Name: " + (String) singleImage.get("imageName"));
+                    System.out.println("db lat: " + (double) singleImage.get("imageLat"));
+                    System.out.println("db lon: " + (double) singleImage.get("imageLon"));
+
+                    String name =  (String) singleImage.get("imageName");
+                    LatLng ltln = new LatLng((double) singleImage.get("imageLat"), (double) singleImage.get("imageLon"));
+                    mMap.addMarker(new MarkerOptions().position(ltln).title(name));
+                    i++;
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                //database error
+            }
+        });
     }
 
 
