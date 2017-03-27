@@ -40,7 +40,6 @@ public class SubmissionActivity extends AppCompatActivity {
 
     private Bitmap mPhoto;
     private ImageView mPhotoView;
-    private TextView mPhotoCaption;
     private Button mSubmit;
     private String mPhotoFile;
     private double mPhotoLat;
@@ -61,7 +60,6 @@ public class SubmissionActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_submission);
         mPhotoView = (ImageView) findViewById(R.id.photo_preview);
-        mPhotoCaption = (TextView) findViewById(R.id.photo_caption);
         mSubmit = (Button) findViewById(R.id.submit_button);
         mPhotoUri = Uri.parse(getIntent().getExtras().getString("ImageUri"));
         mPhotoFile = getIntent().getExtras().getString("ImageFile");
@@ -130,7 +128,6 @@ public class SubmissionActivity extends AppCompatActivity {
         getPhoto();
         getCoordinates();
         mPhotoView.setImageBitmap(mPhoto);
-        mPhotoCaption.setText("Latitude: " + mLatitude + " Longitude: " + mLongitude);
     }
 
     private static Bitmap RotateBitmap(Bitmap source, float angle) {
