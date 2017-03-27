@@ -3,9 +3,11 @@ package com.mattcramblett.picsule;
 import android.content.Context;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 
+import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
@@ -32,12 +34,15 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int LOCAT_PERMISSION_REQUEST_CODE = 1;
     private static final int DEFAULT_ZOOM = 1;
+    private static final double MAPBOUNDSTHRESHOLD = .0002;
     private LatLng mDefaultLocation = new LatLng(0, 0);
     private boolean mLocationPermissionGranted = true;
     private Location mLastKnownLocation;
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
     private MapFragment mMapFragment;
+    private Uri mPhotoUri;
+    private GoogleApiClient client;
 
     private GoogleApiClient mGoogleApiClient;
 
@@ -46,6 +51,8 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
         System.out.println("onCreate method for ExploreActivity being called");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_explore);
+
+
         //connect to the google api
         mGoogleApiClient = new GoogleApiClient.Builder(this).enableAutoManage(this /* FragmentActivity */,
                 this /* OnConnectionFailedListener */)
@@ -70,7 +77,12 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
         LatLng bobaksOldApt = new LatLng(40.0074380, -83.0062790);
         //LatLng currentLatLng = new LatLng(0,0);
         LatLng currentLatLng = new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude());
+        LatLngBounds bounds = new LatLngBounds(
+                new LatLng(currentLatLng.latitude - MAPBOUNDSTHRESHOLD, currentLatLng.longitude - MAPBOUNDSTHRESHOLD),
+                new LatLng(currentLatLng.latitude + MAPBOUNDSTHRESHOLD, currentLatLng.longitude + MAPBOUNDSTHRESHOLD));
+        map.setMinZoomPreference(18);
 
+        //add markers for each photo
         map.addMarker(new MarkerOptions().position(bobaksOldApt).title("Bobaks Old Apartment"));
         map.addMarker(new MarkerOptions().position(currentLatLng).title("Current Location"));
     }

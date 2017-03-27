@@ -3,6 +3,7 @@ package com.mattcramblett.picsule;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.google.android.gms.drive.Metadata;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DatabaseReference;
@@ -26,7 +27,29 @@ public class DatabaseHelper {
 
     }
 
-    public void uploadPhoto(Uri uri, final String fileName, final String lat, final String lon){
+    public void uploadPhoto(Uri uri, final String fileName, final String lat, final String lon) {
+
+        imageRef = storageRef.child("images/" + fileName);
+
+        UploadTask uploadTask = imageRef.putFile(uri);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle unsuccessful uploads
+            }
+        }).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
+                String downloadUrl = taskSnapshot.getDownloadUrl().toString();
+                Image newImage = new Image(fileName, downloadUrl, lat, lon);
+                mDatabase.push().setValue(newImage);
+            }
+        });
+    }
+
+
+    public void uploadPhoto(Uri uri, final String fileName, final double lat, final double lon){
 
         imageRef = storageRef.child("images/" + fileName);
 
@@ -41,12 +64,16 @@ public class DatabaseHelper {
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                 // taskSnapshot.getMetadata() contains file metadata such as size, content-type, and download URL.
                 String downloadUrl= taskSnapshot.getDownloadUrl().toString();
-                Image newImage = new Image(fileName, downloadUrl, lat, lon);
+                Image newImage = new Image(fileName, downloadUrl, String.valueOf(lat), String.valueOf(lon));
                 mDatabase.push().setValue(newImage);
             }
         });
+    }
 
+    //return an array of strings that has the names of all images to load by going through the database and checking the latitude/longitude of all the images
+    public String[] checkImageLocations() {
 
+        return null;
     }
 
 }
