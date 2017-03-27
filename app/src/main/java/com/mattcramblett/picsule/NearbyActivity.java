@@ -19,6 +19,7 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -32,13 +33,19 @@ import java.util.Map;
 
 public class NearbyActivity extends AppCompatActivity {
 
+    //Initialize all the views
     ImageView mPhotoView;
     private Button mNextButton;
     private Button mPreviousButton;
+
+    //Initialize the data
     final ArrayList<String> mNearbyUrls = new ArrayList<String>();
-    private ArrayAdapter<String> mNearbyUrlsAdapter;
     private int mIndex;
     private Map<String, Bitmap> mNearbyCache;
+    FirebaseDatabase mDatabase = FirebaseDatabase.getInstance();
+    DatabaseReference mDatabaseReference = mDatabase.getReference();
+
+    //Get activity context
     private Context mActivityContext;
 
     /**
@@ -57,8 +64,10 @@ public class NearbyActivity extends AppCompatActivity {
         mPreviousButton = (Button) findViewById(R.id.previous_button);
         mNextButton.setEnabled(false);
         mPreviousButton.setEnabled(false);
+        mNearbyUrls.clear();
         mIndex = -1;
         mActivityContext = this.getApplicationContext();
+
         try {
             LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -66,16 +75,13 @@ public class NearbyActivity extends AppCompatActivity {
             final double lon = location.getLongitude();
 
             //Retrieve data from firebase
-            FirebaseDatabase database = FirebaseDatabase.getInstance();
-            DatabaseReference databaseReference = database.getReference();
-            databaseReference.orderByChild("imageLat").startAt(lat-.1).endAt(lat+.1).addValueEventListener(new ValueEventListener() {
+            mDatabaseReference.orderByChild("imageLat").startAt(lat-.1).endAt(lat+.1).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Iterable<DataSnapshot> children = dataSnapshot.getChildren();
-
                     for(DataSnapshot child: children){
                         Image image = child.getValue(Image.class);
-                        if(image.imageLon>lon-.1 && image.imageLon<lon+.1) {
+                        if(image.imageLon>lon-.1 && image.imageLon<lon+.1 && !mNearbyUrls.contains(image.imageURL)) {
                             mNearbyUrls.add(image.imageURL);
                             if (mIndex < mNearbyUrls.size() - 1) {
                                 mNextButton.setEnabled(true);
@@ -90,6 +96,7 @@ public class NearbyActivity extends AppCompatActivity {
 
                 }
             });
+
 
         } catch(SecurityException e){
             Toast.makeText(mActivityContext, "No GPS permissions given", Toast.LENGTH_LONG).show();
@@ -170,10 +177,14 @@ public class NearbyActivity extends AppCompatActivity {
     @Override
     public void onStop() {
         super.onStop();
-
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         AppIndex.AppIndexApi.end(client, getIndexApiAction());
         client.disconnect();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
     }
 }
