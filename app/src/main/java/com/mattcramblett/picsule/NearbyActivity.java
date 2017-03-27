@@ -62,23 +62,28 @@ public class NearbyActivity extends AppCompatActivity {
         try {
             LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            final double lat = location.getLatitude();
+            final double lon = location.getLongitude();
 
             //Retrieve data from firebase
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference databaseReference = database.getReference();
-            databaseReference.orderByKey().addValueEventListener(new ValueEventListener() {
+            databaseReference.orderByChild("imageLat").startAt(lat-.1).endAt(lat+.1).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Iterable<DataSnapshot> children = dataSnapshot.getChildren();
 
                     for(DataSnapshot child: children){
                         Image image = child.getValue(Image.class);
-                        mNearbyUrls.add(image.imageURL);
-                        if(mIndex<mNearbyUrls.size()-1){
-                            mNextButton.setEnabled(true);
+                        if(image.imageLon>lon-.1 && image.imageLon<lon+.1) {
+                            mNearbyUrls.add(image.imageURL);
+                            if (mIndex < mNearbyUrls.size() - 1) {
+                                mNextButton.setEnabled(true);
+                            }
                         }
                     }
                 }
+
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
