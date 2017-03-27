@@ -7,10 +7,10 @@ package com.mattcramblett.picsule;
 public class Image {
     public String imageName;
     public String imageURL;
-    public String imageLat;
-    public String imageLon;
+    public double imageLat;
+    public double imageLon;
 
-    public Image(String name, String url, String lat, String lon){
+    public Image(String name, String url, double lat, double lon){
         imageName = name;
         imageURL = url;
         imageLat = lat;

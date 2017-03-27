@@ -43,8 +43,8 @@ public class SubmissionActivity extends AppCompatActivity {
     private TextView mPhotoCaption;
     private Button mSubmit;
     private String mPhotoFile;
-    private String mPhotoLat;
-    private String mPhotoLon;
+    private double mPhotoLat;
+    private double mPhotoLon;
     private double mLongitude;
     private double mLatitude;
     private Uri mPhotoUri;
