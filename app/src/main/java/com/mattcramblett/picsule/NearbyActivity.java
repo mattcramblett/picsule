@@ -75,13 +75,13 @@ public class NearbyActivity extends AppCompatActivity {
             final double lon = location.getLongitude();
 
             //Retrieve data from firebase
-            mDatabaseReference.orderByChild("imageLat").startAt(lat-.006).endAt(lat+.006).addValueEventListener(new ValueEventListener() {
+            mDatabaseReference.orderByChild("imageLat").startAt(lat-.02).endAt(lat+.02).addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Iterable<DataSnapshot> children = dataSnapshot.getChildren();
                     for(DataSnapshot child: children){
                         Image image = child.getValue(Image.class);
-                        if(image.imageLon>lon-.006 && image.imageLon<lon+.006 && !mNearbyUrls.contains(image.imageURL)) {
+                        if(image.imageLon>lon-.02 && image.imageLon<lon+.02 && !mNearbyUrls.contains(image.imageURL)) {
                             mNearbyUrls.add(image.imageURL);
                             if (mIndex < mNearbyUrls.size() - 1) {
                                 mNextButton.setEnabled(true);
