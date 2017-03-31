@@ -22,19 +22,4 @@ public class Image {
         imageLon = lon;
     }
 
-    public void setImageName(String name){
-        imageName = name;
-    }
-
-    public void setImageURL(String url){
-        imageURL = url;
-    }
-
-    public void setImageLat(double lat){
-        imageLat = lat;
-    }
-
-    public void setImageLon(double lon){
-        imageLon = lon;
-    }
 }

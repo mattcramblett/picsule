@@ -184,7 +184,7 @@ public class MenuActivity extends AppCompatActivity {
     This is a helper meant to start the Submission Activity
      */
     private void startSubmissionIntent(){
-        /*
+
         String mPhotoLat = null;
         String mPhotoLon = null;
         try {
@@ -194,30 +194,18 @@ public class MenuActivity extends AppCompatActivity {
         } catch(IOException e){
             e.printStackTrace();
         }
-        */
-        //if(!(mPhotoLat == null || mPhotoLon == null)) {
+
+        if(!(mPhotoLat == null || mPhotoLon == null)) {
             Intent submission = new Intent(MenuActivity.this, SubmissionActivity.class);
             submission.putExtra("ImageUri", photo.getUri().toString());
             submission.putExtra("ImageFile", photo.getFile().toString());
             submission.putExtra("ImageName", photo.getName());
             startActivity(submission);
-        //}else{
-        /*
-            AlertDialog.Builder builder = new AlertDialog.Builder(mActivityContext);
-            // Add the buttons
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    // User clicked OK button
-                    dialog.dismiss();
-                }
-            });
-            // Set other dialog properties
-            builder.setMessage("Turn on location tagging in your camera settings.")
-                    .setTitle("No location tags!");
-            // Create the AlertDialog
-            AlertDialog dialog = builder.create();
-            dialog.show();
-        } */
+        }else{
+            //Toast for now, dialog later
+            Toast.makeText(mActivityContext, "Turn on geo-tagging in camera settings", Toast.LENGTH_LONG).show();
+        }
+
 
     }
 

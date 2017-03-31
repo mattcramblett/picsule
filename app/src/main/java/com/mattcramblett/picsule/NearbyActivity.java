@@ -15,6 +15,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
@@ -64,42 +65,46 @@ public class NearbyActivity extends AppCompatActivity {
         mPreviousButton = (Button) findViewById(R.id.previous_button);
         mNextButton.setEnabled(false);
         mPreviousButton.setEnabled(false);
+
         mNearbyUrls.clear();
         mIndex = -1;
         mActivityContext = this.getApplicationContext();
 
         try {
-            LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            final double lat = location.getLatitude();
-            final double lon = location.getLongitude();
+            if(location != null) {
+                final double lat = location.getLatitude();
+                final double lon = location.getLongitude();
 
-            //Retrieve data from firebase
-            mDatabaseReference.orderByChild("imageLat").startAt(lat-.02).endAt(lat+.02).addValueEventListener(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    Iterable<DataSnapshot> children = dataSnapshot.getChildren();
-                    for(DataSnapshot child: children){
-                        Image image = child.getValue(Image.class);
-                        if(image.imageLon>lon-.02 && image.imageLon<lon+.02 && !mNearbyUrls.contains(image.imageURL)) {
-                            mNearbyUrls.add(image.imageURL);
-                            if (mIndex < mNearbyUrls.size() - 1) {
-                                mNextButton.setEnabled(true);
+                //Retrieve data from firebase
+                mDatabaseReference.orderByChild("imageLat").startAt(lat - .01).endAt(lat + .01).addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                        for (DataSnapshot child : children) {
+                            Image image = child.getValue(Image.class);
+                            if (image.imageLon > lon - .01 && image.imageLon < lon + .01 && !mNearbyUrls.contains(image.imageURL)) {
+                                mNearbyUrls.add(image.imageURL);
+                                if (mIndex < mNearbyUrls.size() - 1) {
+                                    mNextButton.setEnabled(true);
+                                }
                             }
                         }
                     }
-                }
 
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
-
-
+                    }
+                });
+            } else{
+                //Toast for now, later a dialog
+                Toast.makeText(mActivityContext, "Need to turn on GPS", Toast.LENGTH_LONG).show();
+                finish();
+            }
         } catch(SecurityException e){
-            Toast.makeText(mActivityContext, "No GPS permissions given", Toast.LENGTH_LONG).show();
+
         }
 
         initUI();
@@ -123,26 +128,43 @@ public class NearbyActivity extends AppCompatActivity {
             }
         });
     }
-
+    /*
+    A method for handling getting the next photo to display to the user
+     */
     private void getNextPhoto() {
         mIndex++;
+
+        //Get and load the photo
         String url = mNearbyUrls.get(mIndex);
-        new ImageLoader(mPhotoView, url).execute();
+        Glide.with(mActivityContext).load(url).crossFade().into(mPhotoView);
+
+        //If there is not a next photo
         if(mIndex>mNearbyUrls.size()-2){
             mNextButton.setEnabled(false);
         }
+
+        //If there is a previous photo
         if(mIndex>0){
             mPreviousButton.setEnabled(true);
         }
     }
 
+    /*
+    A method to handle getting the last photo viewed (previous) by the user
+     */
     private void getPreviousPhoto() {
         mIndex--;
+
+        //Get and load the photo
+
         String url = mNearbyUrls.get(mIndex);
-        new ImageLoader(mPhotoView, url).execute();
+        Glide.with(mActivityContext).load(url).crossFade().into(mPhotoView);
+
+        //If there is not a previous photo
         if(mIndex==0){
             mPreviousButton.setEnabled(false);
         }
+        //If there is a next photo
         if(mIndex<mNearbyUrls.size()-1){
             mNextButton.setEnabled(true);
         }
@@ -186,5 +208,11 @@ public class NearbyActivity extends AppCompatActivity {
     @Override
     public void onPause(){
         super.onPause();
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        mNearbyUrls.clear();
     }
 }
