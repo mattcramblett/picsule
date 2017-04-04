@@ -53,7 +53,6 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
     //Initialize the data
     final ArrayList<String> mNearbyUrls = new ArrayList<String>();
     private int mIndex;
-    private Map<String, Bitmap> mNearbyCache;
     FirebaseDatabase mDatabase = FirebaseDatabase.getInstance();
     DatabaseReference mDatabaseReference = mDatabase.getReference();
 
@@ -68,18 +67,24 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_nearby);
 
+        //Setup regarding views
         mPhotoView = (ImageView) findViewById(R.id.nearby_view);
         mNextButton = (Button) findViewById(R.id.next_button);
         mPreviousButton = (Button) findViewById(R.id.previous_button);
         mNextButton.setEnabled(false);
         mPreviousButton.setEnabled(false);
 
+        //Setup regarding private data
         mNearbyUrls.clear();
         mIndex = -1;
+
+        //Get the activity context
         mActivityContext = this.getApplicationContext();
 
+        //Initialize the UI (Listeners and such)
         initUI();
 
+        //Build a Google API client
         client = new GoogleApiClient.Builder(mActivityContext)
                 .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
@@ -87,6 +92,9 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
                 .build();
     }
 
+    /*
+    A method to initialize UI elements
+     */
     private void initUI() {
         mNextButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -170,6 +178,10 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
     }
 
     //Google API overrides
+
+    /*
+    Once the client connects, then we can begin finding the location and nearby photos
+     */
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         try {
@@ -179,13 +191,13 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
                 final double lat = location.getLatitude();
                 final double lon = location.getLongitude();
                 //Retrieve data from firebase
-                mDatabaseReference.orderByChild("imageLat").startAt(lat - .01).endAt(lat + .01).addValueEventListener(new ValueEventListener() {
+                mDatabaseReference.orderByChild("imageLat").startAt(lat - .005).endAt(lat + .005).addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Iterable<DataSnapshot> children = dataSnapshot.getChildren();
                         for (DataSnapshot child : children) {
                             Image image = child.getValue(Image.class);
-                            if (image.imageLon > lon - .01 && image.imageLon < lon + .01 && !mNearbyUrls.contains(image.imageURL)) {
+                            if (image.imageLon > lon - .005 && image.imageLon < lon + .005 && !mNearbyUrls.contains(image.imageURL)) {
                                 mNearbyUrls.add(image.imageURL);
                                 if (mIndex < mNearbyUrls.size() - 1) {
                                     mNextButton.setEnabled(true);
