@@ -1,5 +1,6 @@
 package com.mattcramblett.picsule;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -8,10 +9,13 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
+import android.location.LocationManager;
 import android.media.ExifInterface;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -33,6 +37,10 @@ public class MenuActivity extends AppCompatActivity {
     private Context mActivityContext;
     private PhotoHelper photo;
     private static final int REQUEST_PHOTO = 131;
+    private static final int REQUEST_LOCATION_PERMISSIONS_NEARBY = 44;
+    private static final String[] LOCATION_PERMISSIONS = new String[]{
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+            android.Manifest.permission.ACCESS_COARSE_LOCATION, };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -140,9 +148,15 @@ public class MenuActivity extends AppCompatActivity {
         mNearbyButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent nearby = new Intent(MenuActivity.this, NearbyActivity.class);
-                nearby.putExtra("NAV_BACK", true);
-                startActivity(nearby);
+                LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+                if(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                    Intent nearby = new Intent(MenuActivity.this, NearbyActivity.class);
+                    nearby.putExtra("NAV_BACK", true);
+                    startActivity(nearby);
+                }
+                else{
+                    alertNoGps();
+                }
             }
         });
     }
@@ -180,6 +194,20 @@ public class MenuActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
+        switch(requestCode){
+            case REQUEST_LOCATION_PERMISSIONS_NEARBY:
+                if(hasLocationPermission()){
+                    Intent nearby = new Intent(MenuActivity.this, NearbyActivity.class);
+                    nearby.putExtra("NAV_BACK", true);
+                    startActivity(nearby);
+                }
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
     /*
     This is a helper meant to start the Submission Activity
      */
@@ -207,6 +235,29 @@ public class MenuActivity extends AppCompatActivity {
         }
 
 
+    }
+
+    private boolean hasLocationPermission(){
+        int result = ContextCompat.checkSelfPermission(mActivityContext, LOCATION_PERMISSIONS[0]);
+        return result == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void alertNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your GPS is disabled. We need it to find photos nearby. Would you like to turn it on?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
     }
 
 }

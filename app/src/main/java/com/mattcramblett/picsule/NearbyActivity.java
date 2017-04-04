@@ -1,14 +1,22 @@
 package com.mattcramblett.picsule;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.nfc.Tag;
+import android.os.Build;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -19,7 +27,9 @@ import com.bumptech.glide.Glide;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -32,7 +42,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class NearbyActivity extends AppCompatActivity {
+public class NearbyActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener{
 
     //Initialize all the views
     ImageView mPhotoView;
@@ -46,14 +57,11 @@ public class NearbyActivity extends AppCompatActivity {
     FirebaseDatabase mDatabase = FirebaseDatabase.getInstance();
     DatabaseReference mDatabaseReference = mDatabase.getReference();
 
+    //Google api client
+    private GoogleApiClient client;
+
     //Get activity context
     private Context mActivityContext;
-
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,48 +78,13 @@ public class NearbyActivity extends AppCompatActivity {
         mIndex = -1;
         mActivityContext = this.getApplicationContext();
 
-        try {
-            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if(location != null) {
-                final double lat = location.getLatitude();
-                final double lon = location.getLongitude();
-
-                //Retrieve data from firebase
-                mDatabaseReference.orderByChild("imageLat").startAt(lat - .01).endAt(lat + .01).addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        Iterable<DataSnapshot> children = dataSnapshot.getChildren();
-                        for (DataSnapshot child : children) {
-                            Image image = child.getValue(Image.class);
-                            if (image.imageLon > lon - .01 && image.imageLon < lon + .01 && !mNearbyUrls.contains(image.imageURL)) {
-                                mNearbyUrls.add(image.imageURL);
-                                if (mIndex < mNearbyUrls.size() - 1) {
-                                    mNextButton.setEnabled(true);
-                                }
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-
-                    }
-                });
-            } else{
-                //Toast for now, later a dialog
-                Toast.makeText(mActivityContext, "Need to turn on GPS", Toast.LENGTH_LONG).show();
-                finish();
-            }
-        } catch(SecurityException e){
-
-        }
-
         initUI();
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+        client = new GoogleApiClient.Builder(mActivityContext)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
     }
 
     private void initUI() {
@@ -170,30 +143,10 @@ public class NearbyActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Nearby Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
-    }
-
     @Override
     public void onStart() {
         super.onStart();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
         client.connect();
-        AppIndex.AppIndexApi.start(client, getIndexApiAction());
     }
 
     @Override
@@ -201,7 +154,6 @@ public class NearbyActivity extends AppCompatActivity {
         super.onStop();
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
-        AppIndex.AppIndexApi.end(client, getIndexApiAction());
         client.disconnect();
     }
 
@@ -213,6 +165,54 @@ public class NearbyActivity extends AppCompatActivity {
     @Override
     public void onDestroy(){
         super.onDestroy();
+        client.disconnect();
         mNearbyUrls.clear();
+    }
+
+    //Google API overrides
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        try {
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            Location location = LocationServices.FusedLocationApi.getLastLocation(client);
+            if (location != null) {
+                final double lat = location.getLatitude();
+                final double lon = location.getLongitude();
+                //Retrieve data from firebase
+                mDatabaseReference.orderByChild("imageLat").startAt(lat - .01).endAt(lat + .01).addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                        for (DataSnapshot child : children) {
+                            Image image = child.getValue(Image.class);
+                            if (image.imageLon > lon - .01 && image.imageLon < lon + .01 && !mNearbyUrls.contains(image.imageURL)) {
+                                mNearbyUrls.add(image.imageURL);
+                                if (mIndex < mNearbyUrls.size() - 1) {
+                                    mNextButton.setEnabled(true);
+                                }
+                            }
+                        }
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                });
+            }else{
+                Toast.makeText(mActivityContext, "Cannot find your location", Toast.LENGTH_LONG).show();
+                Log.d("Location", "Null location value");
+            }
+        }catch(SecurityException e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
     }
 }
