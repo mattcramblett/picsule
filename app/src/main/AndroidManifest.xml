@@ -18,8 +18,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MenuActivity"
-            android:label="@string/title_activity_menu"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:label="@string/title_activity_menu" />
         <activity
             android:name=".LoginActivity"
             android:label="@string/title_activity_login"
@@ -43,8 +42,7 @@
 
         <activity
             android:name=".SubmissionActivity"
-            android:label="@string/title_activity_submission"
-            android:theme="@style/AppTheme.NoActionBar" />
+            android:label="@string/title_activity_submission" />
         <activity
             android:name=".ExploreActivity"
             android:label="Explore Photos"

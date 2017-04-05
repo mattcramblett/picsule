@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -14,16 +15,19 @@ import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.LruCache;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.appindexing.Thing;
@@ -42,6 +46,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
+import static com.mattcramblett.picsule.R.attr.colorPrimary;
+import static com.mattcramblett.picsule.R.attr.colorPrimaryDark;
+
 public class NearbyActivity extends AppCompatActivity implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener{
 
@@ -55,12 +62,17 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
     private int mIndex;
     FirebaseDatabase mDatabase = FirebaseDatabase.getInstance();
     DatabaseReference mDatabaseReference = mDatabase.getReference();
+    int mViewHeight = 0;
+    int mViewWidth = 0;
 
     //Google api client
     private GoogleApiClient client;
 
     //Get activity context
     private Context mActivityContext;
+
+    //
+    private LruCache<String, Bitmap> mBitmapCache;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +89,19 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         //Setup regarding private data
         mNearbyUrls.clear();
         mIndex = -1;
+        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+        // Use 1/8th of the available memory for this memory cache.
+        final int cacheSize = maxMemory / 8;
+
+        mBitmapCache = new LruCache<String, Bitmap>(cacheSize) {
+            @Override
+            protected int sizeOf(String key, Bitmap bitmap) {
+                // The cache size will be measured in kilobytes rather than
+                // number of items.
+                return bitmap.getByteCount() / 1024;
+            }
+        };
 
         //Get the activity context
         mActivityContext = this.getApplicationContext();
@@ -108,6 +133,17 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
                 getPreviousPhoto();
             }
         });
+        mPhotoView.setVisibility(View.VISIBLE);
+        ViewTreeObserver vto = mPhotoView.getViewTreeObserver();
+        vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            public boolean onPreDraw() {
+                mPhotoView.getViewTreeObserver().removeOnPreDrawListener(this);
+                mPhotoView.measure(0,0);
+                mViewHeight = mPhotoView.getMeasuredHeight();
+                mViewWidth = mPhotoView.getMeasuredWidth();
+                return true;
+            }
+        });
     }
     /*
     A method for handling getting the next photo to display to the user
@@ -117,7 +153,14 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
 
         //Get and load the photo
         String url = mNearbyUrls.get(mIndex);
-        Glide.with(mActivityContext).load(url).crossFade().into(mPhotoView);
+        Bitmap b = mBitmapCache.get(url);
+        if(b != null){
+            mPhotoView.setImageBitmap(b);
+        }else {
+            Glide.with(mActivityContext).load(url).override(mViewWidth, mViewHeight).crossFade().into(mPhotoView);
+            new BitmapCacheLoader(url, mBitmapCache, mViewHeight, mViewWidth).execute();
+        }
+
 
         //If there is not a next photo
         if(mIndex>mNearbyUrls.size()-2){
@@ -128,6 +171,8 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         if(mIndex>0){
             mPreviousButton.setEnabled(true);
         }
+
+        updateCache(mIndex);
     }
 
     /*
@@ -137,9 +182,14 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         mIndex--;
 
         //Get and load the photo
-
         String url = mNearbyUrls.get(mIndex);
-        Glide.with(mActivityContext).load(url).crossFade().into(mPhotoView);
+        Bitmap b = mBitmapCache.get(url);
+        if(b != null){
+            mPhotoView.setImageBitmap(b);
+        }else {
+            Glide.with(mActivityContext).load(url).override(mViewWidth,mViewHeight).crossFade().into(mPhotoView);
+            new BitmapCacheLoader(url, mBitmapCache, mViewHeight, mViewWidth).execute();
+        }
 
         //If there is not a previous photo
         if(mIndex==0){
@@ -148,6 +198,19 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         //If there is a next photo
         if(mIndex<mNearbyUrls.size()-1){
             mNextButton.setEnabled(true);
+        }
+
+        updateCache(mIndex);
+    }
+
+    private void updateCache(int index){
+        for(int i = 1; i<=3; i++){
+            if(index+i<=mNearbyUrls.size()-1){
+                String url = mNearbyUrls.get(index+1);
+                if(mBitmapCache.get(url) == null){
+                    new BitmapCacheLoader(url, mBitmapCache, mViewHeight, mViewWidth).execute();
+                }
+            }
         }
     }
 
@@ -173,7 +236,6 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
     @Override
     public void onDestroy(){
         super.onDestroy();
-        client.disconnect();
         mNearbyUrls.clear();
     }
 
@@ -195,6 +257,7 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                        int entriesAdded = 0;
                         for (DataSnapshot child : children) {
                             Image image = child.getValue(Image.class);
                             if (image.imageLon > lon - .005 && image.imageLon < lon + .005 && !mNearbyUrls.contains(image.imageURL)) {
@@ -202,8 +265,13 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
                                 if (mIndex < mNearbyUrls.size() - 1) {
                                     mNextButton.setEnabled(true);
                                 }
+                                if(entriesAdded<2){
+                                    entriesAdded++;
+                                    new BitmapCacheLoader(image.imageURL, mBitmapCache, mViewHeight, mViewWidth).execute();
+                                }
                             }
                         }
+                        updateCache(mIndex);
                     }
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
