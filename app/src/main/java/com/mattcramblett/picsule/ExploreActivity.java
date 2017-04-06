@@ -1,6 +1,7 @@
 package com.mattcramblett.picsule;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -46,7 +47,8 @@ import java.util.Map;
 public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMyLocationButtonClickListener,
         OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener {
+        GoogleApiClient.OnConnectionFailedListener,
+        GoogleMap.OnMapClickListener{
 
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private static final int LOCAT_PERMISSION_REQUEST_CODE = 1;
@@ -141,6 +143,15 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 //database error
+            }
+        });
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener(){
+
+            @Override
+            public void onMapClick(LatLng coords){
+                Intent nearby = new Intent(ExploreActivity.this, NearbyActivity.class);
+                nearby.putExtra("Coords", coords);
+                startActivity(nearby);
             }
         });
     }
@@ -295,5 +306,10 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
     protected void onDestroy() {
         System.out.println("onDestroy method for ExploreActivity being called");
         super.onDestroy();
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+
     }
 }

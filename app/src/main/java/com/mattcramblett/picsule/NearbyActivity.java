@@ -39,6 +39,7 @@ import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -80,8 +81,19 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
     //Get activity context
     private Context mActivityContext;
 
-    //
-    private LruCache<String, Bitmap> mBitmapCache;
+    //Create a cache shared across all instances of this activity
+    final static int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
+
+    // Use 1/6th of the available memory for this memory cache.
+    final static int cacheSize = maxMemory / 3;
+    private static LruCache<String, Bitmap> mBitmapCache = new LruCache<String, Bitmap>(cacheSize) {
+        @Override
+        protected int sizeOf(String key, Bitmap bitmap) {
+            // The cache size will be measured in kilobytes rather than
+            // number of items.
+            return bitmap.getByteCount() / 1024;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,19 +112,6 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         //Setup regarding private data
         mNearbyUrls.clear();
         mIndex = -1;
-        final int maxMemory = (int) (Runtime.getRuntime().maxMemory() / 1024);
-
-        // Use 1/8th of the available memory for this memory cache.
-        final int cacheSize = maxMemory / 8;
-
-        mBitmapCache = new LruCache<String, Bitmap>(cacheSize) {
-            @Override
-            protected int sizeOf(String key, Bitmap bitmap) {
-                // The cache size will be measured in kilobytes rather than
-                // number of items.
-                return bitmap.getByteCount() / 1024;
-            }
-        };
 
         //Get the activity context
         mActivityContext = this.getApplicationContext();
@@ -288,49 +287,82 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
      */
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if(locationManager == null){
-            alertNoGps();
-        }
-        else {
-            try {
-                Location location = LocationServices.FusedLocationApi.getLastLocation(client);
-                if (location != null) {
-                    final double lat = location.getLatitude();
-                    final double lon = location.getLongitude();
-                    //Retrieve data from firebase
-                    mDatabaseReference.orderByChild("imageLat").startAt(lat - .005).endAt(lat + .005).addValueEventListener(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(DataSnapshot dataSnapshot) {
-                            Iterable<DataSnapshot> children = dataSnapshot.getChildren();
-                            int entriesAdded = 0;
-                            for (DataSnapshot child : children) {
-                                Image image = child.getValue(Image.class);
-                                if (image.imageLon > lon - .005 && image.imageLon < lon + .005 && !mNearbyUrls.contains(image.imageURL)) {
-                                    mNearbyUrls.add(image.imageURL);
-                                    if (mIndex < mNearbyUrls.size() - 1) {
-                                        mNextButton.setEnabled(true);
-                                        setEnabledColor(mNextButton);
-                                    }
-                                    if (entriesAdded < 2) {
-                                        entriesAdded++;
-                                        new BitmapCacheLoader(image.imageURL, mBitmapCache, mViewHeight, mViewWidth).execute();
+        Intent intent = getIntent();
+        if(intent.hasExtra("Coords")){
+            LatLng coords = intent.getParcelableExtra("Coords");
+            final double lat = coords.latitude;
+            final double lon = coords.longitude;
+            //Retrieve data from firebase
+            mDatabaseReference.orderByChild("imageLat").startAt(lat - .004).endAt(lat + .004).addValueEventListener(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                    int entriesAdded = 0;
+                    for (DataSnapshot child : children) {
+                        Image image = child.getValue(Image.class);
+                        if (image.imageLon > lon - .004 && image.imageLon < lon + .004 && !mNearbyUrls.contains(image.imageURL)) {
+                            mNearbyUrls.add(image.imageURL);
+                            if (mIndex < mNearbyUrls.size() - 1) {
+                                mNextButton.setEnabled(true);
+                                setEnabledColor(mNextButton);
+                            }
+                            if (entriesAdded < 3) {
+                                entriesAdded++;
+                                new BitmapCacheLoader(image.imageURL, mBitmapCache, mViewHeight, mViewWidth).execute();
+                            }
+                        }
+                    }
+                    updateCache(mIndex);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                }
+            });
+        }else {
+            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            if (locationManager == null) {
+                alertNoGps();
+            } else {
+                try {
+                    Location location = LocationServices.FusedLocationApi.getLastLocation(client);
+                    if (location != null) {
+                        final double lat = location.getLatitude();
+                        final double lon = location.getLongitude();
+                        //Retrieve data from firebase
+                        mDatabaseReference.orderByChild("imageLat").startAt(lat - .005).endAt(lat + .005).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                                int entriesAdded = 0;
+                                for (DataSnapshot child : children) {
+                                    Image image = child.getValue(Image.class);
+                                    if (image.imageLon > lon - .005 && image.imageLon < lon + .005 && !mNearbyUrls.contains(image.imageURL)) {
+                                        mNearbyUrls.add(image.imageURL);
+                                        if (mIndex < mNearbyUrls.size() - 1) {
+                                            mNextButton.setEnabled(true);
+                                            setEnabledColor(mNextButton);
+                                        }
+                                        if (entriesAdded < 3) {
+                                            entriesAdded++;
+                                            new BitmapCacheLoader(image.imageURL, mBitmapCache, mViewHeight, mViewWidth).execute();
+                                        }
                                     }
                                 }
+                                updateCache(mIndex);
                             }
-                            updateCache(mIndex);
-                        }
 
-                        @Override
-                        public void onCancelled(DatabaseError databaseError) {
-                        }
-                    });
-                } else {
-                    Toast.makeText(mActivityContext, "Cannot find your location", Toast.LENGTH_LONG).show();
-                    Log.d("Location", "Null location value");
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                            }
+                        });
+                    } else {
+                        Toast.makeText(mActivityContext, "Cannot find your location", Toast.LENGTH_LONG).show();
+                        Log.d("Location", "Null location value");
+                    }
+                } catch (SecurityException e) {
+                    e.printStackTrace();
                 }
-            } catch (SecurityException e) {
-                e.printStackTrace();
             }
         }
     }
