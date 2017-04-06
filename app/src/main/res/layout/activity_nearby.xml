@@ -24,7 +24,8 @@
         android:id="@+id/previous_button"
         android:background="@color/colorPrimary"
         android:layout_width="100dp"
-        android:layout_height="35dp" />
+        android:layout_height="35dp"
+        android:textColor="@android:color/white" />
 
     <Button
         android:text="Next"
@@ -34,5 +35,6 @@
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
         android:layout_width="100dp"
-        android:layout_height="35dp" />
+        android:layout_height="35dp"
+        android:textColor="@android:color/white" />
 </RelativeLayout>

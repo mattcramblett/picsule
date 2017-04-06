@@ -18,7 +18,7 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MenuActivity"
-            android:label="@string/title_activity_menu" />
+            android:label="Picsule" />
         <activity
             android:name=".LoginActivity"
             android:label="@string/title_activity_login"
@@ -42,7 +42,8 @@
 
         <activity
             android:name=".SubmissionActivity"
-            android:label="@string/title_activity_submission" />
+            android:label="Picsule"
+            android:noHistory="true"/>
         <activity
             android:name=".ExploreActivity"
             android:label="Explore Photos"

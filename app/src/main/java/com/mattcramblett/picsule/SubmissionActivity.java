@@ -41,6 +41,7 @@ public class SubmissionActivity extends AppCompatActivity {
     private Bitmap mPhoto;
     private ImageView mPhotoView;
     private Button mSubmit;
+    private Button mCancel;
     private String mPhotoFile;
     private double mPhotoLat;
     private double mPhotoLon;
@@ -61,6 +62,7 @@ public class SubmissionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_submission);
         mPhotoView = (ImageView) findViewById(R.id.photo_preview);
         mSubmit = (Button) findViewById(R.id.submit_button);
+        mCancel = (Button) findViewById(R.id.cancel_button);
         mPhotoUri = Uri.parse(getIntent().getExtras().getString("ImageUri"));
         mPhotoFile = getIntent().getExtras().getString("ImageFile");
         mPhotoName = getIntent().getExtras().getString("ImageName");
@@ -123,6 +125,12 @@ public class SubmissionActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 submitPhoto();
+            }
+        });
+        mCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
             }
         });
         getPhoto();

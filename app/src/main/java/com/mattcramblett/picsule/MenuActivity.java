@@ -15,6 +15,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -37,10 +39,9 @@ public class MenuActivity extends AppCompatActivity {
     private Context mActivityContext;
     private PhotoHelper photo;
     private static final int REQUEST_PHOTO = 131;
-    private static final int REQUEST_LOCATION_PERMISSIONS_NEARBY = 44;
-    private static final String[] LOCATION_PERMISSIONS = new String[]{
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-            android.Manifest.permission.ACCESS_COARSE_LOCATION, };
+    private static final int EXPLORE_REQUEST_LOCATION = 111;
+    private static final int NEARBY_REQUEST_LOCATION = 222;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,23 +140,25 @@ public class MenuActivity extends AppCompatActivity {
         mExploreButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent explore = new Intent(MenuActivity.this, ExploreActivity.class);
-                explore.putExtra("NAV_BACK", true);
-                startActivity(explore);
+                if(hasLocationPermissions()) {
+                    Intent explore = new Intent(MenuActivity.this, ExploreActivity.class);
+                    explore.putExtra("NAV_BACK", true);
+                    startActivity(explore);
+                }else{
+                    requestLocationPermissions(EXPLORE_REQUEST_LOCATION);
+                }
             }
         });
 
         mNearbyButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                LocationManager lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-                if(lm.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+                if(hasLocationPermissions()) {
                     Intent nearby = new Intent(MenuActivity.this, NearbyActivity.class);
                     nearby.putExtra("NAV_BACK", true);
                     startActivity(nearby);
-                }
-                else{
-                    alertNoGps();
+                }else{
+                    requestLocationPermissions(NEARBY_REQUEST_LOCATION);
                 }
             }
         });
@@ -194,17 +197,44 @@ public class MenuActivity extends AppCompatActivity {
         }
     }
 
+    private boolean hasLocationPermissions(){
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        }
+        return false;
+    }
+
+    private void requestLocationPermissions(int requestCode){
+        ActivityCompat.requestPermissions(this,
+                new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                requestCode);
+    }
+
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
-        switch(requestCode){
-            case REQUEST_LOCATION_PERMISSIONS_NEARBY:
-                if(hasLocationPermission()){
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String permissions[],
+                                           @NonNull int[] grantResults) {
+
+        switch (requestCode) {
+            case EXPLORE_REQUEST_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent explore = new Intent(MenuActivity.this, ExploreActivity.class);
+                    explore.putExtra("NAV_BACK", true);
+                    startActivity(explore);
+                }
+            }
+            case NEARBY_REQUEST_LOCATION: {
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Intent nearby = new Intent(MenuActivity.this, NearbyActivity.class);
                     nearby.putExtra("NAV_BACK", true);
                     startActivity(nearby);
                 }
-            default:
-                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+            }
         }
     }
 
@@ -235,11 +265,6 @@ public class MenuActivity extends AppCompatActivity {
         }
 
 
-    }
-
-    private boolean hasLocationPermission(){
-        int result = ContextCompat.checkSelfPermission(mActivityContext, LOCATION_PERMISSIONS[0]);
-        return result == PackageManager.PERMISSION_GRANTED;
     }
 
     private void alertNoGps() {

@@ -1,11 +1,15 @@
 package com.mattcramblett.picsule;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
@@ -14,6 +18,7 @@ import android.nfc.Tag;
 import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.LruCache;
 import android.support.v7.app.AppCompatActivity;
@@ -65,6 +70,10 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
     int mViewHeight = 0;
     int mViewWidth = 0;
 
+    //Request codes
+    final static int EXPLORE_REQUEST_LOCATION = 111;
+    final static int NEARBY_REQUEST_LOCATION = 222;
+
     //Google api client
     private GoogleApiClient client;
 
@@ -85,6 +94,8 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         mPreviousButton = (Button) findViewById(R.id.previous_button);
         mNextButton.setEnabled(false);
         mPreviousButton.setEnabled(false);
+        setDisabledColor(mPreviousButton);
+        setDisabledColor(mNextButton);
 
         //Setup regarding private data
         mNearbyUrls.clear();
@@ -165,11 +176,13 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         //If there is not a next photo
         if(mIndex>mNearbyUrls.size()-2){
             mNextButton.setEnabled(false);
+            setDisabledColor(mNextButton);
         }
 
         //If there is a previous photo
         if(mIndex>0){
             mPreviousButton.setEnabled(true);
+            setEnabledColor(mPreviousButton);
         }
 
         updateCache(mIndex);
@@ -194,10 +207,12 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
         //If there is not a previous photo
         if(mIndex==0){
             mPreviousButton.setEnabled(false);
+            setDisabledColor(mPreviousButton);
         }
         //If there is a next photo
         if(mIndex<mNearbyUrls.size()-1){
             mNextButton.setEnabled(true);
+            setEnabledColor(mNextButton);
         }
 
         updateCache(mIndex);
@@ -212,6 +227,33 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
                 }
             }
         }
+    }
+
+    private void setEnabledColor(Button b){
+        b.getBackground().setColorFilter(null);
+        b.setTextColor(Color.WHITE);
+    }
+    private void setDisabledColor(Button b){
+        b.getBackground().setColorFilter(Color.DKGRAY, PorterDuff.Mode.MULTIPLY);
+        b.setTextColor(Color.LTGRAY);
+    }
+
+    private void alertNoGps() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Your GPS is disabled. We need it to find photos nearby. Would you like to turn it on?")
+                .setCancelable(false)
+                .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(@SuppressWarnings("unused") final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                    }
+                })
+                .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(final DialogInterface dialog, @SuppressWarnings("unused") final int id) {
+                        dialog.cancel();
+                    }
+                });
+        final AlertDialog alert = builder.create();
+        alert.show();
     }
 
     @Override
@@ -246,43 +288,50 @@ public class NearbyActivity extends AppCompatActivity implements GoogleApiClient
      */
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        try {
-            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            Location location = LocationServices.FusedLocationApi.getLastLocation(client);
-            if (location != null) {
-                final double lat = location.getLatitude();
-                final double lon = location.getLongitude();
-                //Retrieve data from firebase
-                mDatabaseReference.orderByChild("imageLat").startAt(lat - .005).endAt(lat + .005).addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        Iterable<DataSnapshot> children = dataSnapshot.getChildren();
-                        int entriesAdded = 0;
-                        for (DataSnapshot child : children) {
-                            Image image = child.getValue(Image.class);
-                            if (image.imageLon > lon - .005 && image.imageLon < lon + .005 && !mNearbyUrls.contains(image.imageURL)) {
-                                mNearbyUrls.add(image.imageURL);
-                                if (mIndex < mNearbyUrls.size() - 1) {
-                                    mNextButton.setEnabled(true);
-                                }
-                                if(entriesAdded<2){
-                                    entriesAdded++;
-                                    new BitmapCacheLoader(image.imageURL, mBitmapCache, mViewHeight, mViewWidth).execute();
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if(locationManager == null){
+            alertNoGps();
+        }
+        else {
+            try {
+                Location location = LocationServices.FusedLocationApi.getLastLocation(client);
+                if (location != null) {
+                    final double lat = location.getLatitude();
+                    final double lon = location.getLongitude();
+                    //Retrieve data from firebase
+                    mDatabaseReference.orderByChild("imageLat").startAt(lat - .005).endAt(lat + .005).addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot dataSnapshot) {
+                            Iterable<DataSnapshot> children = dataSnapshot.getChildren();
+                            int entriesAdded = 0;
+                            for (DataSnapshot child : children) {
+                                Image image = child.getValue(Image.class);
+                                if (image.imageLon > lon - .005 && image.imageLon < lon + .005 && !mNearbyUrls.contains(image.imageURL)) {
+                                    mNearbyUrls.add(image.imageURL);
+                                    if (mIndex < mNearbyUrls.size() - 1) {
+                                        mNextButton.setEnabled(true);
+                                        setEnabledColor(mNextButton);
+                                    }
+                                    if (entriesAdded < 2) {
+                                        entriesAdded++;
+                                        new BitmapCacheLoader(image.imageURL, mBitmapCache, mViewHeight, mViewWidth).execute();
+                                    }
                                 }
                             }
+                            updateCache(mIndex);
                         }
-                        updateCache(mIndex);
-                    }
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                    }
-                });
-            }else{
-                Toast.makeText(mActivityContext, "Cannot find your location", Toast.LENGTH_LONG).show();
-                Log.d("Location", "Null location value");
+
+                        @Override
+                        public void onCancelled(DatabaseError databaseError) {
+                        }
+                    });
+                } else {
+                    Toast.makeText(mActivityContext, "Cannot find your location", Toast.LENGTH_LONG).show();
+                    Log.d("Location", "Null location value");
+                }
+            } catch (SecurityException e) {
+                e.printStackTrace();
             }
-        }catch(SecurityException e){
-            e.printStackTrace();
         }
     }
 

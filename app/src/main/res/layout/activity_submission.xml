@@ -16,10 +16,23 @@
     <Button
         android:text="Submit"
         android:id="@+id/submit_button"
-        android:background="@color/colorPrimary"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
+        android:background="#09e823"
         android:layout_width="100dp"
-        android:layout_height="35dp" />
+        android:layout_height="35dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:textColor="@android:color/white" />
+
+    <Button
+        android:text="Cancel"
+        android:layout_width="100dp"
+        android:layout_height="35dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/cancel_button"
+        android:textColor="@android:color/white"
+        android:background="@android:color/holo_red_light" />
 
 </RelativeLayout>
