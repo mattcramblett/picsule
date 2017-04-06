@@ -3,6 +3,7 @@ package com.mattcramblett.picsule;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -122,7 +123,8 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
                         public void onSuccess(byte[] bytes) {
                             //ON successful download, add a marker to the map with an icon
                             Bitmap b = BitmapFactory.decodeByteArray(bytes,0,bytes.length);
-                            BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(b, 200, 200, false));
+                            b = RotateBitmap(b, 90);
+                            BitmapDescriptor icon = BitmapDescriptorFactory.fromBitmap(Bitmap.createScaledBitmap(b, 110, 175, false));
                             mMap.addMarker(new MarkerOptions().position(ltln).title(name).icon(icon));
                         }
                     }).addOnFailureListener(new OnFailureListener() {
@@ -219,6 +221,12 @@ public class ExploreActivity extends AppCompatActivity implements GoogleMap.OnMy
             mMap.getUiSettings().setMyLocationButtonEnabled(false);
             mLastKnownLocation = null;
         }
+    }
+
+    private static Bitmap RotateBitmap(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
 
